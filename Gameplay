@@ -1,0 +1,787 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class Gameplay {
+    
+//Money
+    public int chips;
+    public int chipsCurrentHand;
+    
+//Objects
+    private Scanner input = new Scanner(System.in);
+    private Deck deck = new Deck();
+    private Values value = new Values();
+    //private Gameplay gameplay = new Gameplay();
+    
+//ArrayList
+    public ArrayList<String> playerHand = new ArrayList<String>();
+    public ArrayList<String> splitHandOne = new ArrayList<String>();
+    public ArrayList<String> splitHandTwo = new ArrayList<String>();
+    public ArrayList<String> dealerHand = new ArrayList<String>();
+    
+//String
+    private String decision;
+    
+//Int
+    private int playerValue;
+    private int dealerValue;
+    private int playerAceCount;
+    private int dealerAceCount;
+    private int testEqual1;
+    private int testEqual2;
+    private int splitValue1;
+    private int splitValue2;
+    
+//Boolean
+    private boolean ifPlayerMore;
+    private boolean splitDone;
+
+//Created by & Asks money at start of game
+    public void introduction() {
+        System.out.println("Created by Tyler Vilet");
+        System.out.println();
+        System.out.println();
+        System.out.println("How many chips would you like to start with?");
+        while (!input.hasNextInt()) {
+            System.out.println();
+            System.out.println("A number would be nice");
+            System.out.println();
+            input.next();
+            System.out.println("How many chips would you like to start with?");
+        }
+        chips = input.nextInt();
+        input.nextLine();
+        System.out.println();
+
+    }
+//Asks money for the hand
+    public void startHand() {
+        System.out.println("How many chips are you betting this hand? (input '-1' to stop playing)");
+        while (!input.hasNextInt()) {
+            System.out.println();
+            System.out.println("A number would be nice");
+            System.out.println();
+            input.next();
+            System.out.println("How many chips are you betting this hand? (input '-1' to stop playing)");
+        }
+        
+        chipsCurrentHand = input.nextInt();
+        input.nextLine();
+        System.out.println();
+        
+//Quit function
+        if (chipsCurrentHand == -1) {
+            gameover();
+
+        }
+
+//Check if they have enough chips                
+        if (chipsCurrentHand > chips) {
+            System.out.println("You do not have that many chips");
+            startHand();
+        }
+        else {
+            chips -= chipsCurrentHand;    
+        }
+    }
+
+//Check to see if hand is empty
+    public boolean isEmpty(ArrayList hand) {
+        if (hand.size() == 0) {
+            return true;
+        }
+        return false;
+    }
+    
+// Hit method
+    public void hit() {
+        
+        
+        playerHand.add(deck.getCard());
+        getValue("P", 0);
+        printHand(playerHand, "P");
+        System.out.println();
+        
+        //see value
+        if (playerValue >= 21) {
+            checkValue("P");
+        }
+        //checkValue("P");
+        //Ask again
+        selection();
+        
+    }
+    
+//Stay method
+    public void stay() {
+        //Print player
+        printHand(playerHand, "P");
+        //TEST
+        //System.out.println("P TEST: " + playerValue);
+        //System.out.println("PAce TEST: " + playerAceCount);
+        System.out.println();
+        
+        //Dealer Hand
+        dealerHand.set(1, deck.getCard());
+        getValue("D", 0);
+        printHand(dealerHand, "D");
+        //Test
+        //System.out.println("D TEST: " + dealerValue);
+        //System.out.println("DAce TEST: " + dealerAceCount);
+        System.out.println();
+        
+        //Check value
+        checkValue("D");
+    }
+    
+//Split method
+    public void split(int splitNumber) {
+        splitDone = true;
+        chips -= chipsCurrentHand;
+        
+        if (splitNumber == 1) {
+        //First Hand
+        playerValue = 0;
+        splitHandOne.add(playerHand.get(0));
+        splitHandOne.add(deck.getCard());
+        //System.out.println("First Hand: " + playerHand.get(0) + "  &  " + playerHand.get(2));
+        getValue("S", 1);
+        System.out.println("Test value: " + playerValue);
+        
+        //Test print
+        printSplit(1);
+        System.out.println();
+        
+        selectionSplit(1);
+            
+        }
+        
+        else {
+        //Second Hand
+        //Reset value
+        playerValue = 0;
+        
+        splitHandTwo.add(playerHand.get(1));
+        splitHandTwo.add(deck.getCard());
+        //System.out.println("First Hand: " + playerHand.get(0) + "  &  " + playerHand.get(2));
+        getValue("S", 2);
+        System.out.println("Test value: " + playerValue);
+        printSplit(2);
+        System.out.println();
+        
+        selectionSplit(2);
+        }
+
+        
+    }
+
+//Double Down
+    public void doubleDown() {
+        //Add money to bet
+        chips -= chipsCurrentHand;
+        chipsCurrentHand *= 2;
+        
+        
+        //hit
+        playerHand.add(deck.getCard());
+        getValue("P", 0);
+        printHand(playerHand, "P");
+        System.out.println();
+        
+        //stay
+        dealerHand.set(1, deck.getCard());
+        getValue("D", 0);
+        printHand(dealerHand, "D");
+        //Test
+        //System.out.println("D TEST: " + dealerValue);
+        //System.out.println("DAce TEST: " + dealerAceCount);
+        System.out.println();
+        
+        //Check value
+        checkValue("D");
+        
+    }
+
+//SPLIT METHODS OF HIT, STAY, DOUBLE
+// Hit method
+    public void hitSplit(int splitNumber) {
+        
+        if (splitNumber == 1) {
+        splitHandOne.add(deck.getCard());
+        getValue("S", 1);
+        printSplit(1);
+        System.out.println();
+        
+        //see value
+        if (playerValue >= 21) {
+            checkValue("S");
+            split(2);
+        }
+        //checkValue("P");
+        //Ask again
+        selectionSplit(1);
+        }
+        
+        
+        //Second Hand
+        else {
+        splitHandTwo.add(deck.getCard());
+        getValue("S", 2);
+        printSplit(2);
+        System.out.println();
+        
+        //see value
+        if (playerValue >= 21) {
+            checkValue("P");
+        }
+        //checkValue("P");
+        //Ask again
+        selectionSplit(2);
+        }
+        
+        
+    }
+    
+//Stay method
+    public void staySplit(int splitNumber) {
+        //Print player
+        printSplit(splitNumber);
+        //TEST
+        //System.out.println("P TEST: " + playerValue);
+        //System.out.println("PAce TEST: " + playerAceCount);
+        System.out.println();
+        
+        //Dealer Hand
+        dealerHand.set(1, deck.getCard());
+        getValue("D", 0);
+        printHand(dealerHand, "D");
+        //Test
+        //System.out.println("D TEST: " + dealerValue);
+        //System.out.println("DAce TEST: " + dealerAceCount);
+        System.out.println();
+        
+        //Check value
+        if (splitNumber == 1) {
+            checkValue("S");
+        }
+        else {
+            checkValue("D");
+        }
+    }
+    
+//Double Down
+    public void doubleDownSplit(int splitNumber) {
+        //Add money to bet
+        chips -= chipsCurrentHand;
+        chipsCurrentHand *= 2;
+        
+        if (splitNumber == 1) {
+            //hit
+        splitHandOne.add(deck.getCard());
+        getValue("S", 1);
+        printSplit(1);
+        System.out.println();
+        
+        //stay
+        dealerHand.set(1, deck.getCard());
+        getValue("D", 0);
+        printHand(dealerHand, "D");
+        //Test
+        //System.out.println("D TEST: " + dealerValue);
+        //System.out.println("DAce TEST: " + dealerAceCount);
+        System.out.println();
+        
+        //Check value
+        checkValue("S");
+        
+        }
+        
+        //Second hand
+        else {
+        //hit
+        splitHandTwo.add(deck.getCard());
+        getValue("S", 2);
+        printSplit(2);
+        System.out.println();
+        
+        //stay
+        //dealerHand.set(1, deck.getCard());
+        getValue("D", 0);
+        printHand(dealerHand, "D");
+        //Test
+        //System.out.println("D TEST: " + dealerValue);
+        //System.out.println("DAce TEST: " + dealerAceCount);
+        System.out.println();
+        
+        //Check value
+        checkValue("D");
+        
+        }
+        
+    }
+
+//Add ace counter
+    public void addAceCounter(String dOrP){
+        if (dOrP.equals("P")) {
+            playerAceCount++;
+        }
+        else if (dOrP.equals("D")) {
+            dealerAceCount++;
+        }
+    }
+
+//Shuffle deck
+    public void shuffle() {
+        deck.shuffleDeck();
+    }
+    
+//Print hands
+    public void printHand(ArrayList hand, String dOrP) {
+        if (dOrP.equals("D")) {
+            System.out.print("Dealer's hand: " + hand.get(0));
+            for (int i = 1; i < hand.size(); i++) {
+                System.out.print("  &  " + hand.get(i));
+            }
+            System.out.println();
+        }
+        if (dOrP.equals("P")) {
+            System.out.print("Player's hand: " + hand.get(0));
+            for (int i = 1; i < hand.size(); i++) {
+                System.out.print("  &  " + hand.get(i));
+            }
+            System.out.println();
+        }
+    }
+    
+//Print split hand
+    public void printSplit(int splitNumber) {
+        if (splitNumber == 1) {
+            System.out.print("Player's hand: " + splitHandOne.get(0));
+            for (int i = 1; i < splitHandOne.size(); i++) {
+                System.out.print("  &  " + splitHandOne.get(i));
+            }
+            System.out.println();
+        }
+        else {
+            System.out.print("Player's hand: " + splitHandTwo.get(0));
+            for (int i = 1; i < splitHandTwo.size(); i++) {
+                System.out.print("  &  " + splitHandTwo.get(i));
+            }
+            System.out.println();
+        }
+    }
+    
+//See value in hand
+    public void getValue(String dOrP, int splitNumber) {
+        if (dOrP.equals("D")) {
+            dealerValue = 0;
+            for (int i = 0; i < dealerHand.size(); i++) {
+                dealerValue += value.getValue(dealerHand.get(i), "D", this);
+            }
+        }
+        if (dOrP.equals("P")) {
+            playerValue = 0;
+            for (int i = 0; i < playerHand.size(); i++) {
+                playerValue += value.getValue(playerHand.get(i), "P", this);
+            }
+        }
+        if (dOrP.equals("S")) {
+            playerValue = 0;
+            if (splitNumber == 1) {
+                for (int i = 0; i < splitHandOne.size(); i++) {
+                playerValue += value.getValue(splitHandOne.get(i), "P", this);
+                }
+            }
+            else {
+                for (int i = 0; i < splitHandTwo.size(); i++) {
+                playerValue += value.getValue(splitHandTwo.get(i), "P", this);
+                }
+            }
+            
+        }
+        
+    }
+
+//Check Value
+    public void checkValue(String dOrP) {
+        
+        //While loop to break if if statement works
+        while (true) {
+        /*
+        SPLIT THIS UP INTO EACH ACE COUNTER UNTIL BETTER WAY
+        IS FIGURED OUT
+        */
+        
+        //For split
+        if (dOrP.equals("S")) {
+            if (playerAceCount != 0) {
+            playerValue += 10;
+            if (playerValue > 21) {
+                playerValue -= 10;
+            }
+        }
+        
+        //Dealer Ace Count Not 0
+        if (dealerAceCount != 0) {
+            dealerValue += 10;
+            if (dealerValue > 21) {
+                dealerValue -= 10;
+            }
+        }
+        
+        //Check BlackJack
+        if (dealerValue == 21) {
+                System.out.println("Dealer Wins!");
+                System.out.println("Total chips = " + chips);
+                System.out.println();
+                split(2);
+                break;
+        }
+        
+        //Check Blackjack for Player
+            if (playerValue == 21) {
+                System.out.println("Player Wins!");
+                chips += 2*chipsCurrentHand;
+                System.out.println("Total chips = " + chips);
+                System.out.println();
+                split(2);
+                break;
+            }
+        
+        
+        //Check if Player busts
+        if (playerValue > 21) {
+            System.out.println("Dealer Wins!");
+            System.out.println("Total chips = " + chips);
+            System.out.println();
+            split(2);
+            break;
+        }
+
+        //Check if Dealer busts
+        if (dealerValue > 21) {
+            System.out.println("Player Wins!");
+            chips += 2*chipsCurrentHand;
+            System.out.println("Total chips = " + chips);
+            System.out.println();
+            split(2);
+            break;
+        }
+        
+        //Check if Player has more
+        if (playerValue >= dealerValue) {
+            dealerHand.add(deck.getCard());
+            getValue("D", 0);
+            System.out.print("Dealer's hand: ");
+            printHand(dealerHand, "D");
+            System.out.println();
+            if (dOrP.equals("S")) {
+                checkValue("S");
+            }
+            else {
+                checkValue("D");
+            }
+        }
+        
+        //Check is Dealer has more
+        if (dealerValue > playerValue && dealerValue < 21) {
+            System.out.println("Dealer Wins!");
+            System.out.println("Total chips = " + chips);
+            System.out.println();
+            split(2);
+            break;
+            } 
+        }
+        
+        
+        //NORMAL
+        
+        //Player Ace Count Not 0
+        if (playerAceCount != 0) {
+            playerValue += 10;
+            if (playerValue > 21) {
+                playerValue -= 10;
+            }
+        }
+        
+        //Dealer Ace Count Not 0
+        if (dealerAceCount != 0) {
+            dealerValue += 10;
+            if (dealerValue > 21) {
+                dealerValue -= 10;
+            }
+        }
+        
+        //Check BlackJack
+        if (dealerValue == 21) {
+                System.out.println("Dealer Wins!");
+                System.out.println("Total chips = " + chips);
+                System.out.println();
+                gameplay();
+                break;
+        }
+        
+        //Check Blackjack for Player
+            if (playerValue == 21) {
+                System.out.println("Player Wins!");
+                chips += 2*chipsCurrentHand;
+                System.out.println("Total chips = " + chips);
+                System.out.println();
+                gameplay();
+                break;
+            }
+        
+        
+        //Check if Player busts
+        if (playerValue > 21) {
+            System.out.println("Dealer Wins!");
+            System.out.println("Total chips = " + chips);
+            System.out.println();
+            gameplay();
+            break;
+        }
+
+        //Check if Dealer busts
+        if (dealerValue > 21) {
+            System.out.println("Player Wins!");
+            chips += 2*chipsCurrentHand;
+            System.out.println("Total chips = " + chips);
+            System.out.println();
+            gameplay();
+            break;
+        }
+        
+        //Check if Player has more
+        if (playerValue >= dealerValue) {
+            dealerHand.add(deck.getCard());
+            getValue("D", 0);
+            printHand(dealerHand, "D");
+            System.out.println();
+            checkValue("D");
+        }
+        
+        //Check is Dealer has more
+        if (dealerValue > playerValue && dealerValue < 21) {
+            System.out.println("Dealer Wins!");
+            System.out.println("Total chips = " + chips);
+            System.out.println();
+            gameplay();
+            break;
+            } 
+        }
+
+        
+        
+
+    }
+
+//Ask player what to do
+    public void selection() {
+        System.out.println("Would you like to 'hit', 'stay', 'double', or 'split'");
+        decision = input.nextLine();
+        System.out.println();
+        
+        //Select hit, stay, or split
+        if(decision.equals("hit")) {
+            hit();
+        }
+        else if(decision.equals("stay")) {
+            stay();
+        }
+        else if(decision.equals("split")) {
+            //getValue("S", 1);
+            
+            if (splitDone == true) {
+                System.out.println("You have already split");
+            }
+            else {
+                //Check if they have enough money
+                if (chipsCurrentHand > chips) {
+                System.out.println("You do not have enough chips to split");
+                selection();
+            }
+                
+                
+                int hand1space = playerHand.get(0).indexOf(" ");
+                int hand2space = playerHand.get(1).indexOf(" ");
+                
+                if (playerHand.get(0).substring(0, hand1space).equals(playerHand.get(1).substring(0, hand2space))) {
+                split(1);
+            }
+            else {
+                System.out.println("You cannot split these cards!");
+                System.out.println();
+                selection();
+                }
+            }
+            
+            
+        }
+        else if (decision.equals("double")) {
+            if (chipsCurrentHand > chips) {
+                System.out.println("You do not have enough chips to double");
+                selection();
+            }
+            doubleDown();
+        }
+        //If they do not input correctly
+        else {
+            System.out.println("This was not an option");
+            selection();
+        }
+    }
+    
+//Selection for split
+public void selectionSplit(int splitNumber) {
+        System.out.println("Would you like to 'hit', 'stay', or 'double'");
+        decision = input.nextLine();
+        System.out.println();
+        
+        //Select hit, stay, or split for card one
+        if (splitNumber == 1) {
+            if(decision.equals("hit")) {
+            hitSplit(1);
+        }
+        else if(decision.equals("stay")) {
+            staySplit(1);
+        }
+        else if (decision.equals("double")) {
+            if (chipsCurrentHand > chips) {
+                System.out.println("You do not have enough chips to double");
+                selectionSplit(1);
+            }
+            
+            doubleDownSplit(1);
+        }
+        //If they do not input correctly
+        else {
+            System.out.println("This was not an option");
+            selectionSplit(1);
+        }
+        }
+        //Second hand
+        else {
+            if(decision.equals("hit")) {
+            hitSplit(2);
+        }
+        else if(decision.equals("stay")) {
+            staySplit(2);
+        }
+        else if (decision.equals("double")) {
+            if (chipsCurrentHand > chips) {
+                System.out.println("You do not have enough chips to split");
+                selectionSplit(2);
+            }
+            doubleDownSplit(2);
+        }
+        //If they do not input correctly
+        else {
+            System.out.println("This was not an option");
+            selectionSplit(2);
+        }
+        }
+        
+    }
+
+//Gameplay, 'hit', 'stay', 'split'
+    public void gameplay() {
+        //remove cards from before
+        while (!isEmpty(playerHand)) {
+            playerHand.remove(0);
+        }
+        while (!isEmpty(dealerHand)) {
+        dealerHand.remove(0);
+        }
+        while (!isEmpty(splitHandOne)) {
+            splitHandOne.remove(0);
+        }
+        while (!isEmpty(splitHandTwo)) {
+            splitHandTwo.remove(0);
+        }
+        
+        //Check if all chips are gone
+        if (chips == 0) {
+            gameover();
+        }
+        
+        //reset variables
+        decision = "";
+        playerValue = 0;
+        dealerValue = 0;
+        playerAceCount = 0;
+        dealerAceCount = 0;
+        ifPlayerMore = false;
+        testEqual1 = 0;
+        testEqual2 = 0;
+        splitDone = false;
+        
+        //if deck reaches the end
+        if (deck.getDeckSize() < 5) {
+            System.out.println("You have reached the end of the deck! Would you like to reshuffle and keep playing? ('yes' or 'no')");
+            String keepPlaying = input.nextLine();
+            if (keepPlaying.equals("yes")) {
+                deck.shuffleDeck();
+                System.out.println();
+                gameplay();
+            }
+            else if (keepPlaying.equals("no")) {
+                gameover();
+            }
+            else {
+                System.out.println("I said, 'yes' or 'no'");
+                gameplay();
+            }
+        }
+        
+        //Ask money
+        startHand();
+        
+        //Get cards
+        playerHand.add(deck.getCard());
+        dealerHand.add(deck.getCard());
+        playerHand.add(deck.getCard());
+        
+        
+    
+
+       
+        
+        //Print cards
+        printHand(playerHand, "P");
+        System.out.println();
+        
+        //Set value
+        getValue("P", 0);
+        
+        printHand(dealerHand, "D");
+        System.out.println();
+        //Set value
+        getValue("D", 0);
+        
+         //Placeholder
+        dealerHand.add("?");
+        
+        //Check Blackjack off rip
+        if (playerValue == 11) {
+            if (playerHand.get(0).substring(0, 3).equals("Ace") || playerHand.get(1).substring(0, 3).equals("Ace")) {
+                System.out.println("Blackjack for the Player!");
+                chips += 2*chipsCurrentHand;
+                System.out.println("Total chips = " + chips);
+                System.out.println();
+                gameplay();
+            }
+        }
+        
+        //Start
+        
+        selection();
+    }
+
+//Game ends
+    public void gameover() {
+        System.out.println("Thank you for playing!");
+        System.out.println("You ended with " + chips + " chips");
+        System.exit(0);
+    }
+    
+}
