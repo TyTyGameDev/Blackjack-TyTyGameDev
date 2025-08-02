@@ -1,0 +1,19 @@
+import java.util.Scanner;
+
+public class MainTester
+{
+    
+    public static void main(String[] args)
+    {
+//Objects
+        Gameplay gameplay = new Gameplay();
+        Scanner input = new Scanner(System.in);
+        
+        gameplay.introduction();
+        
+//While loop
+
+        gameplay.shuffle();
+        gameplay.gameplay();
+    }
+}
